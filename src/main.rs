@@ -58,22 +58,11 @@ fn main() -> io::Result<()> {
                 }
             };
             let mut git_path = PathBuf::from(&root_path);
-            git_path.push(".git");
-            println!("{}", git_path.display());
+            //git_path.push(".git");
+            //println!("{}", git_path.display());
             let workspace = Workspace::new(root_path.clone());
-            let read_files = fs::read_dir(PathBuf::from(&root_path));
-            match read_files {
-                Ok(files) => {
-                    for f in files {
-                        let dir = f?;
-                        println!("{:?}", dir.path());
-                    }
-                }
-                Err(_) => {
-                    eprintln!("error reading files in current directory");
-                    process::exit(1);
-                }
-            }
+            workspace.list_files()?;
+            
         }
         Command::UnknownCommand => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);
@@ -102,16 +91,48 @@ impl From<&str> for Command {
 
 #[derive(Debug)]
 struct Workspace {
-    ignore: [&'static str; 4],
+    ignore: [&'static str; 5],
     path: PathBuf,
 }
 
 impl Workspace {
     fn new(path: PathBuf) -> Self {
-        println!("workspace success!");
         return Workspace {
-            ignore: [".", "..", ".vscode", ".git"],
+            ignore: [".", "..", ".vscode", ".git", "target"],
             path: path
         };
+    }
+
+
+
+    fn list_files(&self) -> io::Result<()> {
+        let read_files = fs::read_dir(PathBuf::from(&self.path));
+            match read_files {
+                Ok(files) => {
+                    for f in files {
+                        let dir = f?;
+                        let path = dir.path().clone();
+                        let mut res = Some(path.clone());
+                        for skip in self.ignore {
+                            if path.clone().as_path().ends_with(skip) {
+                                res = None;
+                            }
+                        }
+                        match res {
+                            Some(p) => {
+                                println!("{}", p.display());
+                            }
+                            None => {
+                                
+                            }
+                        }
+                    }
+                }
+                Err(_) => {
+                    eprintln!("error reading files in current directory");
+                    process::exit(1);
+                }
+            }
+        Ok(())
     }
 }
