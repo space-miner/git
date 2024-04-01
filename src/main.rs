@@ -58,8 +58,11 @@ fn main() -> io::Result<()> {
                 }
             };
             let mut git_path = PathBuf::from(&root_path);
-            //git_path.push(".git");
-            //println!("{}", git_path.display());
+            git_path.push(".git");
+            let mut db_path = PathBuf::from(&git_path);
+            db_path.push("objects");
+            println!("git path:{}", git_path.display());
+            println!("db path: {}", db_path.display());
             let workspace = Workspace::new(root_path.clone());
             workspace.list_files()?;
             
@@ -91,14 +94,14 @@ impl From<&str> for Command {
 
 #[derive(Debug)]
 struct Workspace {
-    ignore: [&'static str; 5],
+    ignore: [&'static str; 7],
     path: PathBuf,
 }
 
 impl Workspace {
     fn new(path: PathBuf) -> Self {
         return Workspace {
-            ignore: [".", "..", ".vscode", ".git", "target"],
+            ignore: [".", "..", ".vscode", ".git", "target", "src", ".gitignore"],
             path: path
         };
     }
