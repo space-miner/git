@@ -17,7 +17,7 @@ fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-fn init(args: Vec<String>) -> io::Result<()> {
+fn init(args: &Vec<String>) -> io::Result<()> {
     let default_dir = &"./".to_string();
     let dir: &String = args.get(2).unwrap_or_else(|| default_dir);
     let path: PathBuf = fs::canonicalize(dir).or_else(|_| {
@@ -36,13 +36,21 @@ fn main() {
     let cmd: &String = args.get(1).unwrap_or_else(|| default_dir);
     match Command::from(&cmd[..]) {
         Command::Init => {
-            todo!()
+            match init(&args) {
+                Ok(_) => {
+                    println!("init success")
+                }
+                Err(_) => {
+                    eprintln!("init failure");
+                    std::process::exit(1);
+                }
+            }
         }
         Command::Commit => {
             let workspace = Workspace::new("./");
             todo!()
         }
-        _ => {
+        Command::UnknownCommand => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);
             process::exit(1);
         }
@@ -53,6 +61,7 @@ fn main() {
 enum Command {
     Init,
     Commit,
+    UnknownCommand
 }
 
 impl From<&str> for Command {
@@ -60,7 +69,7 @@ impl From<&str> for Command {
         match s {
             "init" => Command::Init,
             "commit" => Command::Commit,
-            _ => panic!("unknown command")
+            _ => Command::UnknownCommand
         }
     }
 }
