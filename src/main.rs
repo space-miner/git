@@ -1,6 +1,7 @@
 use std::env;
 use std::env::current_dir;
 use std::fs;
+use std::fs::read_to_string;
 use std::path::PathBuf;
 use std::process;
 use std::io;
@@ -62,7 +63,8 @@ fn main() -> io::Result<()> {
             let workspace = Workspace::new(root_path.clone());
             let files = workspace.list_files()?;
             for file in files {
-                eprintln!("{}", file.as_path().display());
+                let data = workspace.read_data(&file)?;
+                println!("{}", data);
             }
             
         }
@@ -106,6 +108,9 @@ impl Workspace {
     }
 
 
+    fn read_data(&self, p: &PathBuf) -> io::Result<String> {
+        return fs::read_to_string(p.as_path());
+    }
 
     fn list_files(&self) -> io::Result<Vec<PathBuf>> {
         let read_files = fs::read_dir(PathBuf::from(&self.path));
