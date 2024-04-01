@@ -1,7 +1,10 @@
 use core::panic;
 use std::default;
 use std::env;
+use std::env::current_dir;
 use std::fs;
+use std::fs::read;
+use std::path::Path;
 use std::path::PathBuf;
 use std::process;
 use std::io;
@@ -30,7 +33,7 @@ fn init(args: &Vec<String>) -> io::Result<()> {
     Ok(())
 }
 
-fn main() {
+fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let default_dir = &"./".to_string();
     let cmd: &String = args.get(1).unwrap_or_else(|| default_dir);
@@ -38,7 +41,7 @@ fn main() {
         Command::Init => {
             match init(&args) {
                 Ok(_) => {
-                    println!("init success")
+                    println!("init success");
                 }
                 Err(_) => {
                     eprintln!("init failure");
@@ -47,14 +50,37 @@ fn main() {
             }
         }
         Command::Commit => {
-            let workspace = Workspace::new("./");
-            todo!()
+            let root_path = match current_dir() {
+                Ok(cwd) => cwd,
+                Err(_) => {
+                    eprintln!("current_dir() failure in commit case.");
+                    process::exit(1);
+                }
+            };
+            let mut git_path = PathBuf::from(&root_path);
+            git_path.push(".git");
+            println!("{}", git_path.display());
+            let workspace = Workspace::new(root_path.clone());
+            let read_files = fs::read_dir(PathBuf::from(&root_path));
+            match read_files {
+                Ok(files) => {
+                    for f in files {
+                        let dir = f?;
+                        println!("{:?}", dir.path());
+                    }
+                }
+                Err(_) => {
+                    eprintln!("error reading files in current directory");
+                    process::exit(1);
+                }
+            }
         }
         Command::UnknownCommand => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);
             process::exit(1);
         }
     }
+    Ok(())
 }
 
 #[derive(Debug)]
@@ -76,15 +102,16 @@ impl From<&str> for Command {
 
 #[derive(Debug)]
 struct Workspace {
-    ignore: [&'static str; 2],
-    path_name: String,
+    ignore: [&'static str; 4],
+    path: PathBuf,
 }
 
 impl Workspace {
-    fn new(path_name: &str) -> Self {
+    fn new(path: PathBuf) -> Self {
+        println!("workspace success!");
         return Workspace {
-            ignore: [".", ".."],
-            path_name: path_name.to_string(),
+            ignore: [".", "..", ".vscode", ".git"],
+            path: path
         };
     }
 }
