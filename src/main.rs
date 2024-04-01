@@ -64,7 +64,10 @@ fn main() -> io::Result<()> {
             println!("git path:{}", git_path.display());
             println!("db path: {}", db_path.display());
             let workspace = Workspace::new(root_path.clone());
-            workspace.list_files()?;
+            let files = workspace.list_files()?;
+            for file in files {
+                eprintln!("{}", file.as_path().display());
+            }
             
         }
         Command::UnknownCommand => {
@@ -108,34 +111,37 @@ impl Workspace {
 
 
 
-    fn list_files(&self) -> io::Result<()> {
+    fn list_files(&self) -> io::Result<Vec<PathBuf>> {
         let read_files = fs::read_dir(PathBuf::from(&self.path));
-            match read_files {
-                Ok(files) => {
-                    for f in files {
-                        let dir = f?;
-                        let path = dir.path().clone();
-                        let mut res = Some(path.clone());
-                        for skip in self.ignore {
-                            if path.clone().as_path().ends_with(skip) {
-                                res = None;
-                            }
+        let mut v: Vec<PathBuf> = Vec::new();
+
+        match read_files {
+            Ok(files) => {
+                for f in files {
+                    let dir = f?;
+                    let path = dir.path().clone();
+                    let mut res = Some(path.clone());
+                    for skip in self.ignore {
+                        if path.clone().as_path().ends_with(skip) {
+                            res = None;
                         }
-                        match res {
-                            Some(p) => {
-                                println!("{}", p.display());
-                            }
-                            None => {
-                                
-                            }
+                    }
+                    match res {
+                        Some(p) => {
+                            v.push(p);
+                        }
+                        None => {
+                            
                         }
                     }
                 }
-                Err(_) => {
-                    eprintln!("error reading files in current directory");
-                    process::exit(1);
-                }
             }
-        Ok(())
+            Err(_) => {
+                eprintln!("error reading files in current directory");
+                process::exit(1);
+            }
+        }
+        Ok(v)
     }
 }
+    
