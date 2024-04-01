@@ -1,8 +1,8 @@
-use std::env;
-use std::fs;
-use std::path::{Path,PathBuf};
-use std::process;
-use std::io;
+use std::{
+    env, fs, io,
+    path::{Path, PathBuf},
+    process,
+};
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -31,8 +31,8 @@ fn main() -> io::Result<()> {
     let cmd = args.get(1).expect("Usage: {} <command> [<directory>]");
     match Command::from(&cmd[..]) {
         Command::Init => {
-            let default_dir =  &"./".to_string();
-            let dir= args.get(2).unwrap_or(default_dir);
+            let default_dir = &"./".to_string();
+            let dir = args.get(2).unwrap_or(default_dir);
             match init(dir) {
                 Ok(_) => {
                     println!("init success");
@@ -61,9 +61,9 @@ fn main() -> io::Result<()> {
             let files = workspace.list_files()?;
             for file in files {
                 let data = workspace.read_data(&file)?;
-                println!("{}", data);
+                let blob = Blob::new(&data);
+                println!("data:{}, blob: {:?}", data, blob);
             }
-            
         }
         Command::Unknown => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);
@@ -77,7 +77,7 @@ fn main() -> io::Result<()> {
 enum Command {
     Init,
     Commit,
-    Unknown
+    Unknown,
 }
 
 impl From<&str> for Command {
@@ -85,7 +85,7 @@ impl From<&str> for Command {
         match s {
             "init" => Command::Init,
             "commit" => Command::Commit,
-            _ => Command::Unknown
+            _ => Command::Unknown,
         }
     }
 }
@@ -100,10 +100,9 @@ impl Workspace {
     fn new(path: PathBuf) -> Self {
         Workspace {
             ignore: [".", "..", ".vscode", ".git", "target", "src", ".gitignore"],
-            path
+            path,
         }
     }
-
 
     fn read_data(&self, p: &Path) -> io::Result<String> {
         fs::read_to_string(p)
@@ -117,11 +116,9 @@ impl Workspace {
             Ok(read_files) => {
                 for file in read_files {
                     let path = file?.path();
-                    for skip in self.ignore {
-                        if path.ends_with(skip) { 
-                            v.push(path.clone()) 
-                        };
-                    }
+                    if self.ignore.into_iter().all(|x| !path.ends_with(x)) {
+                        v.push(path.clone());
+                    };
                 }
             }
             Err(_) => {
@@ -132,4 +129,34 @@ impl Workspace {
         Ok(v)
     }
 }
-    
+
+#[derive(Debug)]
+enum BlobKind {
+    Blob,
+}
+
+#[derive(Debug)]
+struct Blob {
+    data: String,
+    kind: BlobKind,
+    //object_id:
+}
+
+impl Blob {
+    fn new(data: &str) -> Self {
+        Blob {
+            data: data.into(),
+            kind: BlobKind::Blob, // object_id:
+        }
+    }
+}
+
+struct Database {
+    path: PathBuf,
+}
+
+impl Database {
+    fn new(pbuf: PathBuf) -> Self {
+        Database { path: pbuf }
+    }
+}
