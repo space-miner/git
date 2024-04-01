@@ -1,9 +1,12 @@
+use core::panic;
+use std::default;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::process;
+use std::io;
 
-fn initialize_repo_directory(mut path_buf: PathBuf) -> std::io::Result<()> {
+fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
     let dirs = ["objects", "refs"];
     for dir in dirs.into_iter() {
@@ -14,12 +17,13 @@ fn initialize_repo_directory(mut path_buf: PathBuf) -> std::io::Result<()> {
     Ok(())
 }
 
-fn init(args: Vec<String>) -> std::io::Result<()> {
-    let dir = args.get(2).unwrap_or_else(|| &"./".to_string());
-    let path = fs::canonicalize(*dir).or_else(|_| {
+fn init(args: Vec<String>) -> io::Result<()> {
+    let default_dir = &"./".to_string();
+    let dir: &String = args.get(2).unwrap_or_else(|| default_dir);
+    let path: PathBuf = fs::canonicalize(dir).or_else(|_| {
         fs::create_dir_all(dir)?;
         dbg!("creating new directory {:?}", dir);
-        Ok(PathBuf::from(dir))
+        Ok::<PathBuf, io::Error>(PathBuf::from(dir))
     })?;
     println!("Initialized empty Git repository in {}", path.display());
     initialize_repo_directory(path)?;
@@ -28,8 +32,9 @@ fn init(args: Vec<String>) -> std::io::Result<()> {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let cmd = args.get(1).unwrap_or_else(|| &"./".to_string());
-    match Command::from(*cmd) {
+    let default_dir = &"./".to_string();
+    let cmd: &String = args.get(1).unwrap_or_else(|| default_dir);
+    match Command::from(&cmd[..]) {
         Command::Init => {
             todo!()
         }
@@ -55,15 +60,7 @@ impl From<&str> for Command {
         match s {
             "init" => Command::Init,
             "commit" => Command::Commit,
-        }
-    }
-}
-
-impl From<String> for Command {
-    fn from(s: String) -> Self {
-        match &s[..] {
-            "init" => Command::Init,
-            "commit" => Command::Commit,
+            _ => panic!("unknown command")
         }
     }
 }
