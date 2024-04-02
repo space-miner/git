@@ -170,8 +170,12 @@ impl Database {
     }
 
     fn store(&self, blob: &mut Blob) -> io::Result<()> {
+        let kind = format!("{:?}", blob.kind).to_lowercase();
+        let bytesize = blob.data.bytes().len();
+        let content = format!("{} {}\0{}", kind, bytesize, blob.data);
+
         let mut hasher = Sha1::new();
-        hasher.update(blob.data.as_bytes());
+        hasher.update(content.as_bytes());
         let result = hasher.finalize();
         let u8slice = result.as_slice();
         let mut s = String::new();
@@ -181,9 +185,6 @@ impl Database {
         }
         blob.object_id = s;
 
-        let kind = format!("{:?}", blob.kind).to_lowercase();
-        let bytesize = blob.data.len();
-        let content = format!("{} {}\0{}", kind, bytesize, blob.data);
         self.write_object(&blob.object_id, &content)?;
         Ok(())
     }
