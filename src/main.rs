@@ -6,7 +6,11 @@ use std::{
 
 use hex_literal::hex;
 use sha1::{Sha1, Digest};
-
+use tempfile::NamedTempFile;
+use std::fs::OpenOptions;
+use std::io::Write;
+use deflate::Compression;
+use deflate::write::ZlibEncoder;
 
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
@@ -23,7 +27,6 @@ fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
 fn init(dir: &str) -> io::Result<()> {
     let path: PathBuf = fs::canonicalize(dir).or_else(|_| {
         fs::create_dir_all(dir)?;
-        dbg!("creating new directory {:?}", dir);
         Ok::<PathBuf, io::Error>(PathBuf::from(dir))
     })?;
     println!("Initialized empty Git repository in {}", path.display());
@@ -68,7 +71,7 @@ fn main() -> io::Result<()> {
             for file in files {
                 let data = workspace.read_data(&file)?;
                 let mut blob = Blob::new(&data);
-                database.store(& mut blob);
+                database.store(& mut blob)?;
             }
     
         }
@@ -168,7 +171,7 @@ impl Database {
         Database { path: pbuf }
     }
 
-    fn store(&self, blob: & mut Blob) {
+    fn store(&self, blob: & mut Blob) -> io::Result<()> {
       let mut hasher = Sha1::new();
       hasher.update(blob.data.as_bytes());
       let result = hasher.finalize();
@@ -183,14 +186,28 @@ impl Database {
       let kind = format!("{:?}", blob.kind).to_lowercase();
       let bytesize = blob.data.len();
       let content = format!("{} {}\0{}", kind, bytesize, blob.data);
-      self.write_object(&blob.object_id, &content);
+      self.write_object(&blob.object_id, &content)?;
+      Ok(())
     }
 
-    fn write_object(&self, oid: &String, content: &String) {
+    fn write_object(&self, oid: &String, content: &String) -> io::Result<()> {
       let hd = &oid[0..2];
       let tl = &oid[2..];
-      let object_path = self.path.join(hd).join(tl);
-      dbg!(object_path);
+      let mut object_path = self.path.join(hd);
+      let file = NamedTempFile::new()?;
+      let mut encoder = ZlibEncoder::new(Vec::new(), Compression::Default);
+      encoder.write_all(content.as_bytes()).expect("Write error!");
+      let compressed_data = encoder.finish().expect("Failed to compress object");
+      unsafe {
+          let compressed_string = String::from_utf8_unchecked(compressed_data);
+          fs::write(&file, compressed_string).expect("Unable to write object");
+      }
+      fs::create_dir_all(&object_path)?;
+      dbg!(&object_path);
+      fs::rename(&file.path(), &object_path.join(tl))?;
+
+      Ok(())
+
       
 
 

@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+deflate = "1.0.0"
 hex-literal = "0.4.1"
 sha1 = "0.10.6"
+tempfile = "3.10.1"
