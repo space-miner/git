@@ -1,15 +1,14 @@
 use std::{
-    env, fs,
-    io::{self, Read},
+    env,
+    fs,
+    io,
     path::{Path, PathBuf},
     process,
 };
 
 use deflate::write::ZlibEncoder;
 use deflate::Compression;
-use hex_literal::hex;
 use sha1::{Digest, Sha1};
-use std::fs::OpenOptions;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
@@ -154,7 +153,7 @@ struct Blob {
 impl Blob {
     fn new(data: &str) -> Self {
         Blob {
-            data: data.into(),
+            data: data.to_string(),
             kind: BlobKind::Blob,
             object_id: String::from(""),
         }
@@ -177,7 +176,7 @@ impl Database {
         let u8slice = result.as_slice();
         let mut s = String::new();
         for &byte in u8slice {
-            let byte_str = String::from(format!("{:X}", byte));
+            let byte_str = format!("{:X}", byte);
             s.push_str(&byte_str);
         }
         blob.object_id = s;
@@ -189,21 +188,21 @@ impl Database {
         Ok(())
     }
 
-    fn write_object(&self, object_id: &String, content: &String) -> io::Result<()> {
+    fn write_object(&self, object_id: &str, content: &str) -> io::Result<()> {
         let hd = &object_id[0..2];
         let tl = &object_id[2..];
-        let mut object_path = self.path_buf.join(hd);
-        let file = NamedTempFile::new()?;
-        let mut encoder = ZlibEncoder::new(Vec::new(), Compression::Default);
+        let object_path = self.path_buf.join(hd);
+        let temp_file = NamedTempFile::new()?;
+        let mut encoder = ZlibEncoder::new(Vec::new(), Compression::Fast);
         encoder.write_all(content.as_bytes()).expect("Write error!");
         let compressed_data = encoder.finish().expect("Failed to compress object");
         unsafe {
             let compressed_string = String::from_utf8_unchecked(compressed_data);
-            fs::write(&file, compressed_string).expect("Unable to write object");
+            fs::write(&temp_file, compressed_string).expect("Unable to write object");
         }
         fs::create_dir_all(&object_path)?;
         dbg!(&object_path);
-        fs::rename(&file.path(), &object_path.join(tl))?;
+        fs::rename(temp_file.path(), object_path.join(tl))?;
 
         Ok(())
 
