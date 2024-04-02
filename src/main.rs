@@ -1,17 +1,17 @@
 use std::{
-    env, fs, io::{self, Read},
+    env, fs,
+    io::{self, Read},
     path::{Path, PathBuf},
     process,
 };
 
+use deflate::write::ZlibEncoder;
+use deflate::Compression;
 use hex_literal::hex;
-use sha1::{Sha1, Digest};
-use tempfile::NamedTempFile;
+use sha1::{Digest, Sha1};
 use std::fs::OpenOptions;
 use std::io::Write;
-use deflate::Compression;
-use deflate::write::ZlibEncoder;
-
+use tempfile::NamedTempFile;
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -71,9 +71,8 @@ fn main() -> io::Result<()> {
             for file in files {
                 let data = workspace.read_data(&file)?;
                 let mut blob = Blob::new(&data);
-                database.store(& mut blob)?;
+                database.store(&mut blob)?;
             }
-    
         }
         Command::Unknown => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);
@@ -114,8 +113,8 @@ impl Workspace {
         }
     }
 
-    fn read_data(&self, p: &Path) -> io::Result<String> {
-        fs::read_to_string(p)
+    fn read_data(&self, path: &Path) -> io::Result<String> {
+        fs::read_to_string(path)
     }
 
     fn list_files(&self) -> io::Result<Vec<PathBuf>> {
@@ -149,76 +148,69 @@ enum BlobKind {
 struct Blob {
     data: String,
     kind: BlobKind,
-    object_id: String
+    object_id: String,
 }
 
 impl Blob {
     fn new(data: &str) -> Self {
         Blob {
             data: data.into(),
-            kind: BlobKind::Blob, 
-            object_id: String::from("")
+            kind: BlobKind::Blob,
+            object_id: String::from(""),
         }
     }
 }
 
 struct Database {
-    path: PathBuf,
+    path_buf: PathBuf,
 }
 
 impl Database {
-    fn new(pbuf: PathBuf) -> Self {
-        Database { path: pbuf }
+    fn new(path_buf: PathBuf) -> Self {
+        Database { path_buf }
     }
 
-    fn store(&self, blob: & mut Blob) -> io::Result<()> {
-      let mut hasher = Sha1::new();
-      hasher.update(blob.data.as_bytes());
-      let result = hasher.finalize();
-      let u8slice = result.as_slice();
-      let mut s = String::new();
-      for &byte in u8slice {
-          let byte_str = String::from(format!("{:X}", byte));
-          s.push_str(&byte_str);
-      }
-      blob.object_id = s;
+    fn store(&self, blob: &mut Blob) -> io::Result<()> {
+        let mut hasher = Sha1::new();
+        hasher.update(blob.data.as_bytes());
+        let result = hasher.finalize();
+        let u8slice = result.as_slice();
+        let mut s = String::new();
+        for &byte in u8slice {
+            let byte_str = String::from(format!("{:X}", byte));
+            s.push_str(&byte_str);
+        }
+        blob.object_id = s;
 
-      let kind = format!("{:?}", blob.kind).to_lowercase();
-      let bytesize = blob.data.len();
-      let content = format!("{} {}\0{}", kind, bytesize, blob.data);
-      self.write_object(&blob.object_id, &content)?;
-      Ok(())
+        let kind = format!("{:?}", blob.kind).to_lowercase();
+        let bytesize = blob.data.len();
+        let content = format!("{} {}\0{}", kind, bytesize, blob.data);
+        self.write_object(&blob.object_id, &content)?;
+        Ok(())
     }
 
-    fn write_object(&self, oid: &String, content: &String) -> io::Result<()> {
-      let hd = &oid[0..2];
-      let tl = &oid[2..];
-      let mut object_path = self.path.join(hd);
-      let file = NamedTempFile::new()?;
-      let mut encoder = ZlibEncoder::new(Vec::new(), Compression::Default);
-      encoder.write_all(content.as_bytes()).expect("Write error!");
-      let compressed_data = encoder.finish().expect("Failed to compress object");
-      unsafe {
-          let compressed_string = String::from_utf8_unchecked(compressed_data);
-          fs::write(&file, compressed_string).expect("Unable to write object");
-      }
-      fs::create_dir_all(&object_path)?;
-      dbg!(&object_path);
-      fs::rename(&file.path(), &object_path.join(tl))?;
+    fn write_object(&self, object_id: &String, content: &String) -> io::Result<()> {
+        let hd = &object_id[0..2];
+        let tl = &object_id[2..];
+        let mut object_path = self.path_buf.join(hd);
+        let file = NamedTempFile::new()?;
+        let mut encoder = ZlibEncoder::new(Vec::new(), Compression::Default);
+        encoder.write_all(content.as_bytes()).expect("Write error!");
+        let compressed_data = encoder.finish().expect("Failed to compress object");
+        unsafe {
+            let compressed_string = String::from_utf8_unchecked(compressed_data);
+            fs::write(&file, compressed_string).expect("Unable to write object");
+        }
+        fs::create_dir_all(&object_path)?;
+        dbg!(&object_path);
+        fs::rename(&file.path(), &object_path.join(tl))?;
 
-      Ok(())
+        Ok(())
 
-      
-
-
-//       object_path = @pathname.join(oid[0..1], oid[2..-1])
-// dirname
-// = object_path.dirname
-// temp_path
-// = dirname.join(generate_temp_name)
-      
+        // object_path = @pathname.join(oid[0..1], oid[2..-1])
+        // dirname
+        // = object_path.dirname
+        // temp_path
+        // = dirname.join(generate_temp_name)
     }
-
-    
-
 }
