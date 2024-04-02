@@ -1,8 +1,13 @@
 use std::{
-    env, fs, io,
+    env, fs, io::{self, Read},
     path::{Path, PathBuf},
     process,
 };
+
+use hex_literal::hex;
+use sha1::{Sha1, Digest};
+
+
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -58,12 +63,14 @@ fn main() -> io::Result<()> {
             println!("git path:{}", git_path.display());
             println!("db path: {}", db_path.display());
             let workspace = Workspace::new(root_path);
+            let database = Database::new(db_path);
             let files = workspace.list_files()?;
             for file in files {
                 let data = workspace.read_data(&file)?;
-                let blob = Blob::new(&data);
-                println!("data:{}, blob: {:?}", data, blob);
+                let mut blob = Blob::new(&data);
+                database.store(& mut blob);
             }
+    
         }
         Command::Unknown => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);
@@ -139,14 +146,15 @@ enum BlobKind {
 struct Blob {
     data: String,
     kind: BlobKind,
-    //object_id:
+    object_id: String
 }
 
 impl Blob {
     fn new(data: &str) -> Self {
         Blob {
             data: data.into(),
-            kind: BlobKind::Blob, // object_id:
+            kind: BlobKind::Blob, 
+            object_id: String::from("")
         }
     }
 }
@@ -159,4 +167,41 @@ impl Database {
     fn new(pbuf: PathBuf) -> Self {
         Database { path: pbuf }
     }
+
+    fn store(&self, blob: & mut Blob) {
+      let mut hasher = Sha1::new();
+      hasher.update(blob.data.as_bytes());
+      let result = hasher.finalize();
+      let u8slice = result.as_slice();
+      let mut s = String::new();
+      for &byte in u8slice {
+          let byte_str = String::from(format!("{:X}", byte));
+          s.push_str(&byte_str);
+      }
+      blob.object_id = s;
+
+      let kind = format!("{:?}", blob.kind).to_lowercase();
+      let bytesize = blob.data.len();
+      let content = format!("{} {}\0{}", kind, bytesize, blob.data);
+      self.write_object(&blob.object_id, &content);
+    }
+
+    fn write_object(&self, oid: &String, content: &String) {
+      let hd = &oid[0..2];
+      let tl = &oid[2..];
+      let object_path = self.path.join(hd).join(tl);
+      dbg!(object_path);
+      
+
+
+//       object_path = @pathname.join(oid[0..1], oid[2..-1])
+// dirname
+// = object_path.dirname
+// temp_path
+// = dirname.join(generate_temp_name)
+      
+    }
+
+    
+
 }
