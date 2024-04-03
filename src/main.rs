@@ -7,6 +7,8 @@ use std::{
 
 mod blob;
 mod database;
+mod entry;
+mod tree;
 mod workspace;
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
@@ -64,13 +66,21 @@ fn main() -> io::Result<()> {
             let workspace = workspace::Workspace::new(root_path);
             let database = database::Database::new(db_path);
             let files = workspace.list_files()?;
+            let mut entries = Vec::new();
             for file in files {
                 let data = workspace.read_data(&file)?;
                 let mut blob = blob::Blob::new(&data);
                 database.store(&mut blob)?;
+                let entry = entry::Entry::new(file, &blob.object_id);
+
+                entries.push(entry);
+
                 let retrieve = database.inflate(&blob.object_id);
                 dbg!(retrieve);
             }
+            let tree = tree::Tree::new(entries);
+            dbg!(&tree);
+
         }
         Command::Unknown => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);

@@ -86,7 +86,7 @@ impl Database {
                 match decompressed {
                     Ok(_) => unsafe {
                         let data = String::from_utf8_unchecked(s);
-                        dbg!(data);
+                        data
                     },
                     Err(_) => panic!("error decompressing!"),
                 }
@@ -96,7 +96,5 @@ impl Database {
                 std::process::exit(1);
             }
         }
-
-        hex_id
     }
 }

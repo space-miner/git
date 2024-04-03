@@ -1,12 +1,13 @@
 #[derive(Debug)]
-pub enum BlobKind {
+pub enum Kind {
     Blob,
+    Tree,
 }
 
 #[derive(Debug)]
 pub struct Blob {
     pub data: String,
-    pub kind: BlobKind,
+    pub kind: Kind,
     pub object_id: String,
 }
 
@@ -14,7 +15,7 @@ impl Blob {
     pub fn new(data: &str) -> Self {
         Blob {
             data: data.to_string(),
-            kind: BlobKind::Blob,
+            kind: Kind::Blob,
             object_id: String::from(""),
         }
     }
