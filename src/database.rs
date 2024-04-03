@@ -1,15 +1,15 @@
 use std::{
-  fs,
-  io::{self, Read},
-  path::PathBuf,
+    fs,
+    io::{self, Read},
+    path::PathBuf,
 };
 
 use deflate::write::ZlibEncoder;
 use deflate::Compression;
+use flate2::read::ZlibDecoder;
 use sha1::{Digest, Sha1};
 use std::io::Write;
 use tempfile::NamedTempFile;
-use flate2::read::ZlibDecoder;
 
 use crate::blob;
 
@@ -32,14 +32,14 @@ impl Database {
         let hash_result = hasher.finalize();
         let content_hash = hash_result.as_slice();
         // hex_output is for output only (display, creating directories/files).
-        // the format string expands each hex digit and the resulting string 
-        // is not the hash. 
+        // the format string expands each hex digit and the resulting string
+        // is not the hash.
         let mut content_hash_hex = String::new();
         for &byte in content_hash {
             let byte_str = format!("{:X}", byte);
             content_hash_hex.push_str(&byte_str);
         }
-        // object_id is the actual hash, we take the hash and interpret it 
+        // object_id is the actual hash, we take the hash and interpret it
         // as a string without any modification of any bits. This requires
         // utf8_unchecked to just read the bits as they are into a string.
         unsafe {
@@ -66,9 +66,9 @@ impl Database {
         Ok(())
     }
 
-    pub fn inflate(&self, oid: &str) -> String {
+    pub fn inflate(&self, object_id: &str) -> String {
         let mut hex_id = String::new();
-        let hex_bytes = oid.as_bytes();
+        let hex_bytes = object_id.as_bytes();
         for &byte in hex_bytes {
             let byte_str = format!("{:X}", byte);
             hex_id.push_str(&byte_str);
@@ -84,22 +84,19 @@ impl Database {
                 let mut s = Vec::new();
                 let decompressed = decoder.read_to_end(&mut s);
                 match decompressed {
-                    Ok(_) => {
-                        unsafe {
-                            let data = String::from_utf8_unchecked(s);
-                            dbg!(data);
-                        }
-
+                    Ok(_) => unsafe {
+                        let data = String::from_utf8_unchecked(s);
+                        dbg!(data);
                     },
-                    Err(_) => panic!("error decompressing!")
+                    Err(_) => panic!("error decompressing!"),
                 }
-            },
-            Err (_) => {
+            }
+            Err(_) => {
                 eprintln!("Could not read object data");
                 std::process::exit(1);
-            } 
+            }
         }
 
-        return hex_id;
+        hex_id
     }
 }

@@ -1,7 +1,5 @@
-
 use std::{
-    env,
-    fs,
+    env, fs,
     io::{self},
     path::PathBuf,
     process,
@@ -10,7 +8,6 @@ use std::{
 mod blob;
 mod database;
 mod workspace;
-
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -91,11 +88,11 @@ enum Command {
 }
 
 impl From<&str> for Command {
-  fn from(s: &str) -> Self {
-      match s {
-          "init" => Command::Init,
-          "commit" => Command::Commit,
-          _ => Command::Unknown,
-      }
-  }
+    fn from(s: &str) -> Self {
+        match s {
+            "init" => Command::Init,
+            "commit" => Command::Commit,
+            _ => Command::Unknown,
+        }
+    }
 }

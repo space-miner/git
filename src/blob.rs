@@ -15,7 +15,7 @@ impl Blob {
         Blob {
             data: data.to_string(),
             kind: BlobKind::Blob,
-            object_id: String::from("")
+            object_id: String::from(""),
         }
     }
 }
