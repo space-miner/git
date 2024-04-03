@@ -2,7 +2,7 @@
 use std::{
     env,
     fs,
-    io,
+    io::{self, Read},
     path::{Path, PathBuf},
     process,
 };
@@ -12,6 +12,9 @@ use deflate::Compression;
 use sha1::{Digest, Sha1};
 use std::io::Write;
 use tempfile::NamedTempFile;
+use flate2::read::ZlibDecoder;
+
+
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -189,8 +192,6 @@ impl Database {
             let byte_str = format!("{:X}", byte);
             content_hash_hex.push_str(&byte_str);
         }
-        dbg!("1: before compression (content bytes):");
-        dbg!(content_hash);
         // object_id is the actual hash, we take the hash and interpret it 
         // as a string without any modification of any bits. This requires
         // utf8_unchecked to just read the bits as they are into a string.
@@ -198,7 +199,7 @@ impl Database {
             blob.object_id = String::from_utf8_unchecked(content_hash.to_vec());
         }
         //dbg!(&blob.object_id);
-        self.write_object(&content_hash_hex, content_hash)?;
+        self.write_object(&content_hash_hex, content_str.as_bytes())?;
         Ok(())
     }
 
@@ -211,8 +212,6 @@ impl Database {
         let mut encoder = ZlibEncoder::new(Vec::new(), Compression::Fast);
         encoder.write_all(content).expect("Write error!");
         let compressed_data = encoder.finish().expect("Failed to compress object");
-        dbg!("2: post compression");
-        dbg!(&compressed_data);
         fs::write(&temp_file, compressed_data).expect("Unable to write object");
         fs::create_dir_all(&object_path)?;
         fs::rename(temp_file.path(), object_path.join(tl))?;
@@ -230,12 +229,24 @@ impl Database {
         let hd = &hex_id[0..2];
         let tl = &hex_id[2..];
         let object_path = self.path_buf.join(hd).join(tl);
-        let content = fs::read(object_path.as_path());
+        let mut content = fs::read(object_path.as_path());
+
         match content {
             Ok(content) => {
-                dbg!("compressed data fetched.");
-                dbg!(object_path, content);
+                dbg!(object_path, &content);
+                let mut decoder = ZlibDecoder::new(&content[..]);
+                let mut s = Vec::new();
+                let decompressed = decoder.read_to_end(&mut s);
+                match decompressed {
+                    Ok(_) => {
+                        unsafe {
+                            let data = String::from_utf8_unchecked(s);
+                            dbg!(data);
+                        }
 
+                    },
+                    Err(_) => panic!("error decompressing!")
+                }
             },
             Err (_) => {
                 eprintln!("Could not read object data");
