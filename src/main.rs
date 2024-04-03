@@ -1,3 +1,4 @@
+
 use std::{
     env,
     fs,
@@ -71,6 +72,8 @@ fn main() -> io::Result<()> {
                 let data = workspace.read_data(&file)?;
                 let mut blob = Blob::new(&data);
                 database.store(&mut blob)?;
+                let retrieve = database.inflate(&blob.object_id);
+                dbg!(retrieve);
             }
         }
         Command::Unknown => {
@@ -155,7 +158,7 @@ impl Blob {
         Blob {
             data: data.to_string(),
             kind: BlobKind::Blob,
-            object_id: String::from(""),
+            object_id: String::from("")
         }
     }
 }
@@ -172,45 +175,74 @@ impl Database {
     fn store(&self, blob: &mut Blob) -> io::Result<()> {
         let kind = format!("{:?}", blob.kind).to_lowercase();
         let bytesize = blob.data.bytes().len();
-        let content = format!("{} {}\0{}", kind, bytesize, blob.data);
+        let content_str = format!("{} {}\0{}", kind, bytesize, blob.data);
 
         let mut hasher = Sha1::new();
-        hasher.update(content.as_bytes());
-        let result = hasher.finalize();
-        let u8slice = result.as_slice();
-        let mut s = String::new();
-        for &byte in u8slice {
+        hasher.update(content_str.as_bytes());
+        let hash_result = hasher.finalize();
+        let content_hash = hash_result.as_slice();
+        // hex_output is for output only (display, creating directories/files).
+        // the format string expands each hex digit and the resulting string 
+        // is not the hash. 
+        let mut content_hash_hex = String::new();
+        for &byte in content_hash {
             let byte_str = format!("{:X}", byte);
-            s.push_str(&byte_str);
+            content_hash_hex.push_str(&byte_str);
         }
-        blob.object_id = s;
-
-        self.write_object(&blob.object_id, &content)?;
+        dbg!("1: before compression (content bytes):");
+        dbg!(content_hash);
+        // object_id is the actual hash, we take the hash and interpret it 
+        // as a string without any modification of any bits. This requires
+        // utf8_unchecked to just read the bits as they are into a string.
+        unsafe {
+            blob.object_id = String::from_utf8_unchecked(content_hash.to_vec());
+        }
+        //dbg!(&blob.object_id);
+        self.write_object(&content_hash_hex, content_hash)?;
         Ok(())
     }
 
-    fn write_object(&self, object_id: &str, content: &str) -> io::Result<()> {
-        let hd = &object_id[0..2];
-        let tl = &object_id[2..];
+    fn write_object(&self, hex_id: &str, content: &[u8]) -> io::Result<()> {
+        let hd = &hex_id[0..2];
+        let tl = &hex_id[2..];
+        dbg!(hex_id);
         let object_path = self.path_buf.join(hd);
         let temp_file = NamedTempFile::new()?;
         let mut encoder = ZlibEncoder::new(Vec::new(), Compression::Fast);
-        encoder.write_all(content.as_bytes()).expect("Write error!");
+        encoder.write_all(content).expect("Write error!");
         let compressed_data = encoder.finish().expect("Failed to compress object");
-        unsafe {
-            let compressed_string = String::from_utf8_unchecked(compressed_data);
-            fs::write(&temp_file, compressed_string).expect("Unable to write object");
-        }
+        dbg!("2: post compression");
+        dbg!(&compressed_data);
+        fs::write(&temp_file, compressed_data).expect("Unable to write object");
         fs::create_dir_all(&object_path)?;
-        dbg!(&object_path);
         fs::rename(temp_file.path(), object_path.join(tl))?;
 
         Ok(())
+    }
 
-        // object_path = @pathname.join(oid[0..1], oid[2..-1])
-        // dirname
-        // = object_path.dirname
-        // temp_path
-        // = dirname.join(generate_temp_name)
+    fn inflate(&self, oid: &str) -> String {
+        let mut hex_id = String::new();
+        let hex_bytes = oid.as_bytes();
+        for &byte in hex_bytes {
+            let byte_str = format!("{:X}", byte);
+            hex_id.push_str(&byte_str);
+        }
+        let hd = &hex_id[0..2];
+        let tl = &hex_id[2..];
+        let object_path = self.path_buf.join(hd).join(tl);
+        let content = fs::read(object_path.as_path());
+        match content {
+            Ok(content) => {
+                dbg!("compressed data fetched.");
+                dbg!(object_path, content);
+
+            },
+            Err (_) => {
+                eprintln!("Could not read object data");
+                std::process::exit(1);
+            } 
+        }
+
+        return hex_id;
     }
 }
