@@ -3,9 +3,10 @@ use crate::entry::Entry;
 
 #[derive(Debug)]
 pub struct Tree {
-    entries: Vec<Entry>,
-    mode: String,
-    kind: Kind,
+    pub entries: Vec<Entry>,
+    pub mode: String,
+    pub kind: Kind,
+    pub object_id: String,
 }
 
 impl Tree {
@@ -14,14 +15,7 @@ impl Tree {
             entries,
             mode: "100644".to_string(),
             kind: Kind::Tree,
+            object_id: String::new(),
         }
-    }
-}
-
-use std::fmt;
-
-impl fmt::Display for Tree {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) {
-        !todo()
     }
 }

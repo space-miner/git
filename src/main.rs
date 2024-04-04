@@ -71,16 +71,19 @@ fn main() -> io::Result<()> {
                 let data = workspace.read_data(&file)?;
                 let mut blob = blob::Blob::new(&data);
                 database.store(&mut blob)?;
-                let entry = entry::Entry::new(file, &blob.object_id);
+                
+                let filename = file.file_name().unwrap().to_str().unwrap().to_string();
+                let entry = entry::Entry::new(filename, &blob.object_id);
 
                 entries.push(entry);
 
                 let retrieve = database.inflate(&blob.object_id);
                 dbg!(retrieve);
             }
-            let tree = tree::Tree::new(entries);
-            dbg!(&tree);
-
+            let mut tree = tree::Tree::new(entries);
+            database.store_tree(&mut tree);
+            let tree_data = database.inflate(&tree.object_id);
+            hexdump::hexdump(&tree_data.as_bytes());
         }
         Command::Unknown => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);

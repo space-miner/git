@@ -7,5 +7,14 @@ edition = "2021"
 deflate = "1.0.0"
 flate2 = "1.0.28"
 hex-literal = "0.4.1"
+hexdump = "0.1.1"
 sha1 = "0.10.6"
 tempfile = "3.10.1"
+
+[[bin]]
+name = "hexdump"
+path = "src/hexdump.rs"
+
+[[bin]]
+name = "shit"
+path = "src/main.rs"

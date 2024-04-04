@@ -2,14 +2,14 @@ use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct Entry {
-    pub path: PathBuf,
+    pub filename: String,
     pub object_id: String,
 }
 
 impl Entry {
-    pub fn new(path: PathBuf, object_id: &str) -> Self {
+    pub fn new(filename: String, object_id: &str) -> Self {
         Entry {
-            path,
+            filename,
             object_id: object_id.to_string(),
         }
     }
