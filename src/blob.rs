@@ -22,22 +22,20 @@ impl Blob {
             object_id: String::from(""),
         }
     }
-
-    
 }
 
 impl Object for Blob {
     fn to_string(&self) -> String {
         let kind = format!("{:?}", self.kind).to_lowercase();
         let bytesize = self.data.bytes().len();
-        return format!("{} {}\0{}", kind, bytesize, self.data);
+        format!("{} {}\0{}", kind, bytesize, self.data)
     }
 
     fn get_object_id(&self) -> String {
-        return self.object_id.clone();
+        self.object_id.clone()
     }
 
     fn set_object_id(&mut self, object_id: String) {
         self.object_id = object_id;
     }
-  }
+}

@@ -8,9 +8,9 @@ use std::{
 mod blob;
 mod database;
 mod entry;
+mod traits;
 mod tree;
 mod workspace;
-mod traits;
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -72,7 +72,7 @@ fn main() -> io::Result<()> {
                 let data = workspace.read_data(&file)?;
                 let mut blob = blob::Blob::new(&data);
                 database.store(&mut blob)?;
-                
+
                 let filename = file.file_name().unwrap().to_str().unwrap().to_string();
                 let entry = entry::Entry::new(filename, &blob.object_id);
 

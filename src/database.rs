@@ -27,7 +27,6 @@ impl Database {
         let content_hash = Self::hash_content(&content_str);
         let content_hash_hex = Self::u8_to_hex_str(content_hash.clone());
         unsafe {
-
             object.set_object_id(String::from_utf8_unchecked(content_hash));
         }
         self.write_object(&content_hash_hex, content_str.as_bytes())?;
@@ -48,13 +47,11 @@ impl Database {
         Ok(())
     }
 
-    
-
     pub fn inflate(&self, object_id: &str) -> String {
         let content_hash = object_id.as_bytes().to_vec();
         let content_hash_hex = Self::u8_to_hex_str(content_hash.clone());
         let (dir, file) = Self::hash_to_path(&content_hash_hex);
-        
+
         let object_path = self.path_buf.join(dir).join(file);
         let compressed_content = fs::read(object_path.as_path());
 
@@ -82,7 +79,7 @@ impl Database {
         let mut hasher = Sha1::new();
         hasher.update(content_str.as_bytes());
         let hash_result = hasher.finalize();
-        return hash_result.as_slice().to_vec();
+        hash_result.as_slice().to_vec()
     }
 
     pub fn u8_to_hex_str(content_hash: Vec<u8>) -> String {
@@ -91,11 +88,10 @@ impl Database {
             let byte_str = format!("{:02X}", byte);
             content_hash_hex.push_str(&byte_str);
         }
-        return content_hash_hex;
+        content_hash_hex
     }
 
     pub fn hash_to_path(content_hash_hex: &str) -> (&str, &str) {
-        return(&content_hash_hex[0..2], &content_hash_hex[2..]);
+        (&content_hash_hex[0..2], &content_hash_hex[2..])
     }
-
 }
