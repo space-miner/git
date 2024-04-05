@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 #[derive(Debug)]
 pub struct Entry {
     pub filename: String,

@@ -10,6 +10,7 @@ mod database;
 mod entry;
 mod tree;
 mod workspace;
+mod traits;
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -81,7 +82,7 @@ fn main() -> io::Result<()> {
                 dbg!(retrieve);
             }
             let mut tree = tree::Tree::new(entries);
-            database.store_tree(&mut tree);
+            let _ = database.store(&mut tree).unwrap();
             let tree_data = database.inflate(&tree.object_id);
             hexdump::hexdump(&tree_data.as_bytes());
         }

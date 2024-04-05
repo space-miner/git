@@ -1,5 +1,6 @@
 use crate::blob::Kind;
 use crate::entry::Entry;
+use crate::traits::Object;
 
 #[derive(Debug)]
 pub struct Tree {
@@ -18,8 +19,9 @@ impl Tree {
             object_id: String::new(),
         }
     }
-
-    pub fn to_string(&self) -> String {
+}
+impl Object for Tree {
+    fn to_string(&self) -> String {
         let kind = format!("{:?}", self.kind).to_lowercase();
         let mut content = String::new();
         for entry in &self.entries {
@@ -27,5 +29,13 @@ impl Tree {
         }
         // metadata + content
         return format!("{} {}\0{}", kind, content.bytes().len(), content);
+    }
+
+    fn get_object_id(&self) -> String {
+        return self.object_id.clone();
+    }
+    
+    fn set_object_id(&mut self, object_id: String) {
+        self.object_id = object_id;
     }
 }

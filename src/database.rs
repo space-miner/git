@@ -11,7 +11,7 @@ use sha1::{Digest, Sha1};
 use std::io::Write;
 use tempfile::NamedTempFile;
 
-use crate::{blob, tree};
+use crate::traits::Object;
 
 pub struct Database {
     pub path_buf: PathBuf,
@@ -22,27 +22,14 @@ impl Database {
         Database { path_buf }
     }
 
-    pub fn store(&self, blob: &mut blob::Blob) -> io::Result<()> {
-        let content_str = blob.to_string();
+    pub fn store(&self, object: &mut dyn Object) -> io::Result<()> {
+        let content_str = object.to_string();
         let content_hash = Self::hash_content(&content_str);
         let content_hash_hex = Self::u8_to_hex_str(content_hash.clone());
         unsafe {
-            blob.object_id = String::from_utf8_unchecked(content_hash);
-        }
-        self.write_object(&content_hash_hex, content_str.as_bytes())?;
-        Ok(())
-    }
 
-    
-    
-    pub fn store_tree(&self, tree: &mut tree::Tree) -> io::Result<()> {
-        let content_str = tree.to_string();
-        let content_hash = Self::hash_content(&content_str);
-        let content_hash_hex = Self::u8_to_hex_str(content_hash.clone());
-        unsafe {
-            tree.object_id = String::from_utf8_unchecked(content_hash.to_vec());
+            object.set_object_id(String::from_utf8_unchecked(content_hash));
         }
-        
         self.write_object(&content_hash_hex, content_str.as_bytes())?;
         Ok(())
     }
