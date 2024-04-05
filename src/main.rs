@@ -75,14 +75,23 @@ fn main() -> io::Result<()> {
 
                 let filename = file.file_name().unwrap().to_str().unwrap().to_string();
                 let entry = entry::Entry::new(filename, &blob.object_id);
+                hexdump::hexdump(&blob.object_id.as_bytes());;
 
                 entries.push(entry);
 
                 let retrieve = database.inflate(&blob.object_id);
-                dbg!(retrieve);
+                //dbg!(retrieve);
+            }
+            entries.sort_by_key(|e| e.filename.clone());
+            for entry in &entries {
+                hexdump::hexdump(entry.object_id.as_bytes());
             }
             let mut tree = tree::Tree::new(entries);
+
+
+
             let _ = database.store(&mut tree).unwrap();
+
             let tree_data = database.inflate(&tree.object_id);
             hexdump::hexdump(&tree_data.as_bytes());
         }
