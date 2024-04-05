@@ -19,4 +19,10 @@ impl Blob {
             object_id: String::from(""),
         }
     }
+
+    pub fn to_string(&self) -> String {
+        let kind = format!("{:?}", self.kind).to_lowercase();
+        let bytesize = self.data.bytes().len();
+        return format!("{} {}\0{}", kind, bytesize, self.data);
+    }
 }

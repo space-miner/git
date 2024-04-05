@@ -18,4 +18,14 @@ impl Tree {
             object_id: String::new(),
         }
     }
+
+    pub fn to_string(&self) -> String {
+        let kind = format!("{:?}", self.kind).to_lowercase();
+        let mut content = String::new();
+        for entry in &self.entries {
+            content.push_str(&format!("{} {}\0{}", self.mode, entry.filename, entry.object_id))
+        }
+        // metadata + content
+        return format!("{} {}\0{}", kind, content.bytes().len(), content);
+    }
 }
