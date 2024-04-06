@@ -9,6 +9,7 @@ mod database;
 mod entry;
 mod traits;
 mod tree;
+mod utils;
 mod workspace;
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
@@ -50,17 +51,10 @@ fn main() -> io::Result<()> {
             }
         }
         Command::Commit => {
-            let root_path = match env::current_dir() {
-                Ok(cwd) => cwd,
-                Err(_) => {
-                    eprintln!("current_dir() failure in commit case.");
-                    process::exit(1);
-                }
-            };
-            let mut git_path = PathBuf::from(&root_path);
-            git_path.push(".git");
-            let mut db_path = PathBuf::from(&git_path);
-            db_path.push("objects");
+            let git_path = utils::get_git_path();
+            let db_path = utils::get_db_path();
+            let root_path = utils::get_root_path();
+
             let workspace = workspace::Workspace::new(root_path);
             let database = database::Database::new(db_path);
             let files = workspace.list_files()?;
@@ -69,11 +63,8 @@ fn main() -> io::Result<()> {
                 let data = workspace.read_data(&file)?;
                 let mut blob = blob::Blob::new(&data);
                 database.store(&mut blob)?;
-
                 let filename = file.file_name().unwrap().to_str().unwrap().to_string();
                 let entry = entry::Entry::new(filename, &blob.object_id);
-                //hexdump::hexdump(&blob.object_id.as_bytes());
-
                 entries.push(entry);
             }
             entries.sort_by_key(|e| e.filename.clone());
@@ -81,19 +72,11 @@ fn main() -> io::Result<()> {
             let mut tree = tree::Tree::new(entries);
             database.store(&mut tree).unwrap();
 
-            let name_key = "GIT_AUTHOR_NAME";
-            let email_key = "GIT_AUTHOR_EMAIL";
-            let name = match env::var(name_key) {
-                Ok(name) => name,
-                Err(_) => String::from(""),
-            };
-            let email = match env::var(email_key) {
-                Ok(email) => email,
-                Err(_) => String::from(""),
-            };
             let now = Local::now();
             let formatted_datetime = now.format("%s %z").to_string();
-            let author = author::Author::new(name, email, formatted_datetime);
+            let author_name = env::var("GIT_AUTHOR_NAME").expect("GIT_AUTHOR_NAME not set");
+            let author_email = env::var("GIT_AUTHOR_EMAIL").expect("GIT_AUTHOR_EMAIL not set");
+            let author = author::Author::new(author_name, author_email, formatted_datetime);
 
             let mut commit_message = String::new();
 
@@ -103,8 +86,7 @@ fn main() -> io::Result<()> {
             let mut commit = commit::Commit::new(tree.object_id, author, commit_message.clone());
 
             database.store(&mut commit).unwrap();
-            let commit_hex_str =
-                database::Database::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
+            let commit_hex_str = utils::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
 
             fs::write(git_path.join("HEAD"), &commit_hex_str).expect("Unable to write object");
             let first_line = commit.message.lines().next().unwrap();

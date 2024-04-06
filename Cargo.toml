@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 chrono = "0.4.37"
 deflate = "1.0.0"
+dotenv = "0.15.0"
 flate2 = "1.0.28"
 hex-literal = "0.4.1"
 hexdump = "0.1.1"
@@ -13,8 +14,8 @@ sha1 = "0.10.6"
 tempfile = "3.10.1"
 
 [[bin]]
-name = "hexdump"
-path = "src/hexdump.rs"
+name = "cat-file"
+path = "src/cat-file.rs"
 
 [[bin]]
 name = "shit"
