@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+chrono = "0.4.37"
 deflate = "1.0.0"
 flate2 = "1.0.28"
 hex-literal = "0.4.1"

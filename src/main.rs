@@ -5,12 +5,18 @@ use std::{
     process,
 };
 
+use chrono::{Local, TimeZone};
+
+use crate::traits::Object;
+
 mod blob;
 mod database;
 mod entry;
 mod traits;
 mod tree;
 mod workspace;
+mod author;
+mod commit;
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -75,25 +81,36 @@ fn main() -> io::Result<()> {
 
                 let filename = file.file_name().unwrap().to_str().unwrap().to_string();
                 let entry = entry::Entry::new(filename, &blob.object_id);
-                hexdump::hexdump(&blob.object_id.as_bytes());;
+                //hexdump::hexdump(&blob.object_id.as_bytes());
 
                 entries.push(entry);
 
-                let retrieve = database.inflate(&blob.object_id);
-                //dbg!(retrieve);
             }
             entries.sort_by_key(|e| e.filename.clone());
-            for entry in &entries {
-                hexdump::hexdump(entry.object_id.as_bytes());
-            }
+
             let mut tree = tree::Tree::new(entries);
-
-
-
             let _ = database.store(&mut tree).unwrap();
 
-            let tree_data = database.inflate(&tree.object_id);
-            hexdump::hexdump(&tree_data.as_bytes());
+            let name_key = "GIT_AUTHOR_NAME";
+            let email_key = "GIT_AUTHOR_EMAIL";
+            let name = match env::var(name_key) {
+                Ok(name) => name,
+                Err(_) => String::from("")
+            };
+            let email = match env::var(email_key) {
+                Ok(email) => email,
+                Err(_) => String::from("")
+            };
+            let now = Local::now();
+            let formatted_datetime = now.format("%s %z").to_string();
+            let author = author::Author::new(name, email, formatted_datetime);
+            dbg!(&author);
+            let message = String::from("commit message");
+            let mut commit = commit::Commit::new(tree.object_id, author, message);
+            hexdump::hexdump(commit.to_string().as_bytes());
+            let _ = database.store(&mut commit).unwrap();
+            
+
         }
         Command::Unknown => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);
