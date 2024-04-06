@@ -61,10 +61,7 @@ impl Database {
                 let mut s = Vec::new();
                 let decompressed = decoder.read_to_end(&mut s);
                 match decompressed {
-                    Ok(_) => unsafe {
-                        let data = String::from_utf8_unchecked(s);
-                        data
-                    },
+                    Ok(_) => unsafe { String::from_utf8_unchecked(s) },
                     Err(_) => panic!("error decompressing!"),
                 }
             }

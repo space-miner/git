@@ -1,22 +1,15 @@
-use std::{
-    env, fs,
-    io::{self},
-    path::PathBuf,
-    process,
-};
+use std::{env, fs, io, path::PathBuf, process};
 
-use chrono::{Local, TimeZone};
+use chrono::Local;
 
-use crate::traits::Object;
-
+mod author;
 mod blob;
+mod commit;
 mod database;
 mod entry;
 mod traits;
 mod tree;
 mod workspace;
-mod author;
-mod commit;
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -82,38 +75,38 @@ fn main() -> io::Result<()> {
                 //hexdump::hexdump(&blob.object_id.as_bytes());
 
                 entries.push(entry);
-
             }
             entries.sort_by_key(|e| e.filename.clone());
 
             let mut tree = tree::Tree::new(entries);
-            let _ = database.store(&mut tree).unwrap();
+            database.store(&mut tree).unwrap();
 
             let name_key = "GIT_AUTHOR_NAME";
             let email_key = "GIT_AUTHOR_EMAIL";
             let name = match env::var(name_key) {
                 Ok(name) => name,
-                Err(_) => String::from("")
+                Err(_) => String::from(""),
             };
             let email = match env::var(email_key) {
                 Ok(email) => email,
-                Err(_) => String::from("")
+                Err(_) => String::from(""),
             };
             let now = Local::now();
             let formatted_datetime = now.format("%s %z").to_string();
             let author = author::Author::new(name, email, formatted_datetime);
-            
+
             let mut commit_message = String::new();
 
             io::stdin().read_line(&mut commit_message)?;
             dbg!(&commit_message);
-                
-            let mut commit = commit::Commit::new(tree.object_id, author, commit_message.clone());
-            
-            let _ = database.store(&mut commit).unwrap();
-            let commit_hex_str = database::Database::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
 
-            fs::write(&git_path.join("HEAD"), &commit_hex_str).expect("Unable to write object");
+            let mut commit = commit::Commit::new(tree.object_id, author, commit_message.clone());
+
+            database.store(&mut commit).unwrap();
+            let commit_hex_str =
+                database::Database::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
+
+            fs::write(git_path.join("HEAD"), &commit_hex_str).expect("Unable to write object");
             let first_line = commit.message.lines().next().unwrap();
             println!("[(root-commit) {}] {}", commit_hex_str, first_line);
         }

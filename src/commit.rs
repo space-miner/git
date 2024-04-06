@@ -1,14 +1,12 @@
-use crate::tree;
 use crate::author;
 use crate::traits::Object;
-
 
 #[derive(Debug)]
 pub struct Commit {
     pub author: author::Author,
     pub message: String,
     pub object_id: String,
-    pub tree_object_id: String
+    pub tree_object_id: String,
 }
 
 impl Commit {
@@ -17,22 +15,17 @@ impl Commit {
             author,
             message,
             tree_object_id,
-            object_id: String::from("")
+            object_id: String::from(""),
         }
     }
-
-    
 }
 
 impl Object for Commit {
-
     fn to_string(&self) -> String {
-
-        format!("tree {}\nauthor {}\ncommitter {}\n{}", 
-                self.tree_object_id,
-                self.author.to_string(),
-                self.author.to_string(),
-                self.message)
+        format!(
+            "tree {}\nauthor {}\ncommitter {}\n{}",
+            self.tree_object_id, self.author, self.author, self.message
+        )
     }
 
     fn get_object_id(&self) -> String {
