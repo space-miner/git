@@ -109,10 +109,10 @@ fn main() -> io::Result<()> {
             dbg!(&commit_message);
                 
             let mut commit = commit::Commit::new(tree.object_id, author, commit_message.clone());
+            let commit_hex_str = database::Database::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
             let _ = database.store(&mut commit).unwrap();
 
-            fs::write(&git_path.join("HEAD"), commit.get_object_id()).expect("Unable to write object");
-            let commit_hex_str = database::Database::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
+            fs::write(&git_path.join("HEAD"), &commit_hex_str).expect("Unable to write object");
             let first_line = commit.message.lines().next().unwrap();
             println!("[(root-commit) {}] {}", commit_hex_str, first_line);
         }
