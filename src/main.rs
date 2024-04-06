@@ -68,8 +68,6 @@ fn main() -> io::Result<()> {
             git_path.push(".git");
             let mut db_path = PathBuf::from(&git_path);
             db_path.push("objects");
-            println!("git path:{}", git_path.display());
-            println!("db path: {}", db_path.display());
             let workspace = workspace::Workspace::new(root_path);
             let database = database::Database::new(db_path);
             let files = workspace.list_files()?;
@@ -104,20 +102,19 @@ fn main() -> io::Result<()> {
             let now = Local::now();
             let formatted_datetime = now.format("%s %z").to_string();
             let author = author::Author::new(name, email, formatted_datetime);
-            dbg!(&author);
-            let message = String::from("commit message");
-            let mut commit = commit::Commit::new(tree.object_id, author, message);
-            hexdump::hexdump(commit.to_string().as_bytes());
+            
+            let mut commit_message = String::new();
+
+            io::stdin().read_line(&mut commit_message)?;
+            dbg!(&commit_message);
+                
+            let mut commit = commit::Commit::new(tree.object_id, author, commit_message.clone());
             let _ = database.store(&mut commit).unwrap();
 
-
             fs::write(&git_path.join("HEAD"), commit.get_object_id()).expect("Unable to write object");
-            
-
-
-
-
-
+            let commit_hex_str = database::Database::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
+            let first_line = commit.message.lines().next().unwrap();
+            println!("[(root-commit) {}] {}", commit_hex_str, first_line);
         }
         Command::Unknown => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);
