@@ -109,7 +109,14 @@ fn main() -> io::Result<()> {
             let mut commit = commit::Commit::new(tree.object_id, author, message);
             hexdump::hexdump(commit.to_string().as_bytes());
             let _ = database.store(&mut commit).unwrap();
+
+
+            fs::write(&git_path.join("HEAD"), commit.get_object_id()).expect("Unable to write object");
             
+
+
+
+
 
         }
         Command::Unknown => {
