@@ -27,8 +27,8 @@ pub struct LockFile {
 impl LockFile {
     pub fn new(path: PathBuf) -> Self {
         Self {
-            file_path: path.join("HEAD").clone(),
-            lock_path: path.join(".lock"),
+            file_path: path.join("HEAD"),
+            lock_path: path.join("HEAD.lock").clone(),
             lock: None
         }
     }
@@ -84,6 +84,7 @@ impl LockFile {
  
     pub fn commit(&mut self) -> Result<(), LockfileError> {
         self.raise_on_stale_lock()?;
+        dbg!(&self.lock_path, &self.file_path);
         dbg!(&self.lock_path, &self.file_path);
         let result = fs::rename(&self.lock_path, &self.file_path);
         match result {
