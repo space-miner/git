@@ -10,7 +10,8 @@ mod entry;
 mod traits;
 mod tree;
 mod utils;
-mod workspace;
+mod workspace; 
+mod refs;
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -59,8 +60,9 @@ fn main() -> io::Result<()> {
             // set up git data structures.
             let workspace = workspace::Workspace::new(root_path);
             let database = database::Database::new(db_path);
+            let refs = refs::Refs::new(git_path.clone());
 
-            // Read current workspace files into Entry vector.
+            // Read current workspace files into Entry vector (used to construct Tree).
             let files = workspace.list_files()?;
             let mut entries = Vec::new();
             for file in files {
@@ -77,6 +79,9 @@ fn main() -> io::Result<()> {
             let mut tree = tree::Tree::new(entries);
             database.store(&mut tree).unwrap();
 
+            // Get parent of current commit.
+            let parent = refs.read_head().unwrap();
+
             // Create Author. 
             let now = Local::now();
             let formatted_datetime = now.format("%s %z").to_string();
@@ -87,14 +92,20 @@ fn main() -> io::Result<()> {
             // Read commit message, create commit, store it. 
             let mut commit_message = String::new();
             io::stdin().read_line(&mut commit_message)?;
-            let mut commit = commit::Commit::new(tree.object_id, author, commit_message.clone());
+            let mut commit = commit::Commit::new(parent.clone(), tree.object_id, author, commit_message.clone());
             database.store(&mut commit).unwrap();
             
             // Write commit id to HEAD.
             let commit_hex_str = utils::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
-            fs::write(git_path.join("HEAD"), &commit_hex_str).expect("Unable to write object");
+            refs.update_head(commit_hex_str.clone());
             let first_line = commit.message.lines().next().unwrap();
-            println!("[(root-commit) {}] {}", commit_hex_str, first_line);
+            
+            let mut is_root = String::from("");
+            dbg!(&parent);
+            if parent.len() == 0 {
+                is_root = String::from("(root-commit) ");
+            }
+            println!("{}{}] {}", is_root, commit_hex_str, first_line);
         }
         Command::Unknown => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);
