@@ -51,12 +51,16 @@ fn main() -> io::Result<()> {
             }
         }
         Command::Commit => {
+            // set up paths.
             let git_path = utils::get_git_path();
             let db_path = utils::get_db_path();
             let root_path = utils::get_root_path();
 
+            // set up git data structures.
             let workspace = workspace::Workspace::new(root_path);
             let database = database::Database::new(db_path);
+
+            // Read current workspace files into Entry vector.
             let files = workspace.list_files()?;
             let mut entries = Vec::new();
             for file in files {
@@ -69,25 +73,25 @@ fn main() -> io::Result<()> {
             }
             entries.sort_by_key(|e| e.filename.clone());
 
+            // Create and store tree for commit. 
             let mut tree = tree::Tree::new(entries);
             database.store(&mut tree).unwrap();
 
+            // Create Author. 
             let now = Local::now();
             let formatted_datetime = now.format("%s %z").to_string();
             let author_name = env::var("GIT_AUTHOR_NAME").expect("GIT_AUTHOR_NAME not set");
             let author_email = env::var("GIT_AUTHOR_EMAIL").expect("GIT_AUTHOR_EMAIL not set");
             let author = author::Author::new(author_name, author_email, formatted_datetime);
 
+            // Read commit message, create commit, store it. 
             let mut commit_message = String::new();
-
             io::stdin().read_line(&mut commit_message)?;
-            dbg!(&commit_message);
-
             let mut commit = commit::Commit::new(tree.object_id, author, commit_message.clone());
-
             database.store(&mut commit).unwrap();
+            
+            // Write commit id to HEAD.
             let commit_hex_str = utils::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
-
             fs::write(git_path.join("HEAD"), &commit_hex_str).expect("Unable to write object");
             let first_line = commit.message.lines().next().unwrap();
             println!("[(root-commit) {}] {}", commit_hex_str, first_line);

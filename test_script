@@ -1,0 +1,2 @@
+cargo run --bin shit init;
+cargo run --bin shit commit;
