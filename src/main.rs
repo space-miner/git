@@ -98,7 +98,18 @@ fn main() -> io::Result<()> {
             
             // Write commit id to HEAD.
             let commit_hex_str = utils::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
-            let _ = refs.update_head(commit_hex_str.clone());
+
+            let _ = refs.create_head_dir();
+            let _ = match refs.update_head(commit_hex_str.clone()) {
+                Ok(_) => {
+                    dbg!("no problem");
+                    Ok(())
+                },
+                Err(err) => {
+                    dbg!(&err);
+                    Err(err)
+                }  
+            };
 
             let first_line = commit.message.lines().next().unwrap();
             

@@ -54,6 +54,7 @@ impl LockFile {
                         Ok(false)
                     },
                     Err(ref err) if err.kind() == io::ErrorKind::NotFound => {
+                        dbg!(err,&self.lock_path);
                         Err(LockfileError::MissingParent)
                     }
                     Err(ref err) if err.kind() == io::ErrorKind::PermissionDenied => {
@@ -83,7 +84,7 @@ impl LockFile {
  
     pub fn commit(&mut self) -> Result<(), LockfileError> {
         self.raise_on_stale_lock()?;
-
+        dbg!(&self.lock_path, &self.file_path);
         let result = fs::rename(&self.lock_path, &self.file_path);
         match result {
             Ok(_) => {

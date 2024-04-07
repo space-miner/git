@@ -36,14 +36,25 @@ impl Refs {
                 // uncaught results!
                 let _ = lockfile.write(commit_hex_str);
                 let _ = lockfile.write(String::from("\n"));
+                let _ = lockfile.commit();
                 Ok(())
             },
-            _ => {
+            Ok(false) => {
+                dbg!("false in update head");
+                Err(RefsError::LockDenied)
+            }
+            Err(err) => {
+                dbg!(err);
                 Err(RefsError::LockDenied)
             }
         }
     }
-        
+
+    pub fn create_head_dir (&self) -> io::Result<()> {
+        dbg!("here");
+        fs::create_dir(self.head_path())?;
+        Ok(())
+    }   
 
     pub fn head_path (&self) -> PathBuf {
         self.pathname.join("HEAD")
