@@ -12,7 +12,7 @@ pub struct Commit {
 }
 
 impl Commit {
-    pub fn new(parent:String, tree_object_id: String, author: Author, message: String) -> Self {
+    pub fn new(parent: String, tree_object_id: String, author: Author, message: String) -> Self {
         Commit {
             parent,
             author,
@@ -28,7 +28,7 @@ impl Object for Commit {
         let u8 = self.tree_object_id.as_bytes();
         let mut parent = String::from("");
         if self.parent.len() > 0 {
-            parent = format!("parent {}\n", self.parent.clone());
+            parent = format!("parent {}", self.parent.clone());
         }
         let content_str = format!(
             "tree {}\n{}author {}\ncommitter {}\n{}",

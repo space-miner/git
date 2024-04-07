@@ -7,12 +7,12 @@ mod blob;
 mod commit;
 mod database;
 mod entry;
+mod lockfile;
+mod refs;
 mod traits;
 mod tree;
 mod utils;
-mod workspace; 
-mod refs;
-mod lockfile;
+mod workspace;
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -76,26 +76,31 @@ fn main() -> io::Result<()> {
             }
             entries.sort_by_key(|e| e.filename.clone());
 
-            // Create and store tree for commit. 
+            // Create and store tree for commit.
             let mut tree = tree::Tree::new(entries);
             database.store(&mut tree).unwrap();
 
             // Get parent of current commit.
             let parent = refs.read_head().unwrap();
 
-            // Create Author. 
+            // Create Author.
             let now = Local::now();
             let formatted_datetime = now.format("%s %z").to_string();
             let author_name = env::var("GIT_AUTHOR_NAME").expect("GIT_AUTHOR_NAME not set");
             let author_email = env::var("GIT_AUTHOR_EMAIL").expect("GIT_AUTHOR_EMAIL not set");
             let author = author::Author::new(author_name, author_email, formatted_datetime);
 
-            // Read commit message, create commit, store it. 
+            // Read commit message, create commit, store it.
             let mut commit_message = String::new();
             io::stdin().read_line(&mut commit_message)?;
-            let mut commit = commit::Commit::new(parent.clone(), tree.object_id, author, commit_message.clone());
+            let mut commit = commit::Commit::new(
+                parent.clone(),
+                tree.object_id,
+                author,
+                commit_message.clone(),
+            );
             database.store(&mut commit).unwrap();
-            
+
             // Write commit id to HEAD.
             let commit_hex_str = utils::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
 
@@ -103,15 +108,15 @@ fn main() -> io::Result<()> {
                 Ok(_) => {
                     dbg!("no problem");
                     Ok(())
-                },
+                }
                 Err(err) => {
                     dbg!(&err);
                     Err(err)
-                }  
+                }
             };
 
             let first_line = commit.message.lines().next().unwrap();
-            
+
             let mut is_root = String::from("");
             dbg!(&parent);
             if parent.len() == 0 {
