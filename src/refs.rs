@@ -1,4 +1,21 @@
-use std::{fs::{self, File}, io::{self, Read}, path::{Path, PathBuf}};
+use std::{error, fmt, fs::{self, File}, io::{self, Read}, path::{Path, PathBuf}};
+
+use crate::lockfile;
+
+#[derive(Debug)]
+pub enum RefsError {
+    LockDenied
+}
+
+impl error::Error for RefsError {}
+
+impl fmt::Display for RefsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            err => write!(f, "{}", err)
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Refs {
@@ -12,9 +29,21 @@ impl Refs {
         }
     }
 
-    pub fn update_head(&self, commit_hex_str: String) {
-        fs::write(self.head_path(), &commit_hex_str).expect("Unable to write commit to HEAD file.");
+    pub fn update_head(&self, commit_hex_str: String) -> Result<(), RefsError> {
+        let mut lockfile = lockfile::LockFile::new(self.head_path());
+        match lockfile.hold_for_update() {
+            Ok(true) => {
+                // uncaught results!
+                let _ = lockfile.write(commit_hex_str);
+                let _ = lockfile.write(String::from("\n"));
+                Ok(())
+            },
+            _ => {
+                Err(RefsError::LockDenied)
+            }
+        }
     }
+        
 
     pub fn head_path (&self) -> PathBuf {
         self.pathname.join("HEAD")

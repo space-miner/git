@@ -12,6 +12,7 @@ mod tree;
 mod utils;
 mod workspace; 
 mod refs;
+mod lockfile;
 
 fn initialize_repo_directory(mut path_buf: PathBuf) -> io::Result<()> {
     path_buf.push(".git");
@@ -97,7 +98,8 @@ fn main() -> io::Result<()> {
             
             // Write commit id to HEAD.
             let commit_hex_str = utils::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
-            refs.update_head(commit_hex_str.clone());
+            let _ = refs.update_head(commit_hex_str.clone());
+
             let first_line = commit.message.lines().next().unwrap();
             
             let mut is_root = String::from("");
