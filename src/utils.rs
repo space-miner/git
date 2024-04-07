@@ -30,7 +30,7 @@ pub fn hash_content(content_str: &str) -> Vec<u8> {
 pub fn u8_to_hex_str(content_hash: Vec<u8>) -> String {
     let mut content_hash_hex = String::new();
     for byte in &content_hash {
-        let byte_str = format!("{:02X}", byte);
+        let byte_str = format!("{:02X}", byte).to_ascii_lowercase();
         content_hash_hex.push_str(&byte_str);
     }
     content_hash_hex

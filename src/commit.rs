@@ -38,7 +38,7 @@ impl Object for Commit {
             self.author,
             self.message
         );
-        format!("commit {}{}", content_str.bytes().len(), content_str)
+        format!("commit {}\0{}", content_str.bytes().len(), content_str)
     }
 
     fn get_object_id(&self) -> String {
