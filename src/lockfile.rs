@@ -27,7 +27,7 @@ pub struct LockFile {
 impl LockFile {
     pub fn new(path: PathBuf) -> Self {
         Self {
-            file_path: path.clone(),
+            file_path: path.join("HEAD").clone(),
             lock_path: path.join(".lock"),
             lock: None
         }

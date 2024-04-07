@@ -29,8 +29,8 @@ impl Refs {
         }
     }
 
-    pub fn update_head(&self, commit_hex_str: String) -> Result<(), RefsError> {
-        let mut lockfile = lockfile::LockFile::new(self.head_path());
+    pub fn update_head(& self, commit_hex_str: String) -> Result<(), RefsError> {
+        let mut lockfile = lockfile::LockFile::new(self.pathname.clone());
         match lockfile.hold_for_update() {
             Ok(true) => {
                 // uncaught results!
