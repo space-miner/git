@@ -48,13 +48,7 @@ impl Refs {
                 Err(RefsError::LockDenied)
             }
         }
-    }
-
-    pub fn create_head_dir (&self) -> io::Result<()> {
-        dbg!("here");
-        fs::create_dir(self.head_path())?;
-        Ok(())
-    }   
+    }  
 
     pub fn head_path (&self) -> PathBuf {
         self.pathname.join("HEAD")

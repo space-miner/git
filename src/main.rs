@@ -99,7 +99,6 @@ fn main() -> io::Result<()> {
             // Write commit id to HEAD.
             let commit_hex_str = utils::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
 
-            let _ = refs.create_head_dir();
             let _ = match refs.update_head(commit_hex_str.clone()) {
                 Ok(_) => {
                     dbg!("no problem");
