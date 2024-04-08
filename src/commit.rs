@@ -27,7 +27,7 @@ impl Object for Commit {
     fn to_string(&self) -> String {
         let u8 = self.tree_object_id.as_bytes();
         let mut parent = String::from("");
-        if self.parent.len() > 0 {
+        if !self.parent.is_empty() {
             parent = format!("parent {}", self.parent.clone());
         }
         let content_str = format!(

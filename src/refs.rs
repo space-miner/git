@@ -16,9 +16,8 @@ impl error::Error for RefsError {}
 
 impl fmt::Display for RefsError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            err => write!(f, "{}", err),
-        }
+        let err = self;
+        write!(f, "{}", err)
     }
 }
 
@@ -61,7 +60,7 @@ impl Refs {
         let head_path = self.head_path();
         let path = head_path.as_path();
         if path.exists() {
-            let mut file = File::open(&path)?;
+            let mut file = File::open(path)?;
             let mut contents = String::new();
             file.read_to_string(&mut contents)?;
             let contents = contents.trim_end_matches('\n').to_string();

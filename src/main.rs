@@ -119,7 +119,7 @@ fn main() -> io::Result<()> {
 
             let mut is_root = String::from("");
             dbg!(&parent);
-            if parent.len() == 0 {
+            if parent.is_empty() {
                 is_root = String::from("(root-commit) ");
             }
             println!("{}{}] {}", is_root, commit_hex_str, first_line);

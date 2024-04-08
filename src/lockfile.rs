@@ -17,9 +17,8 @@ impl error::Error for LockfileError {}
 
 impl fmt::Display for LockfileError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            err => write!(f, "{}", err),
-        }
+        let err = self;
+        write!(f, "{}", err)
     }
 }
 
