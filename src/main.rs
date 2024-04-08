@@ -71,7 +71,8 @@ fn main() -> io::Result<()> {
                 let mut blob = blob::Blob::new(&data);
                 database.store(&mut blob)?;
                 let filename = file.file_name().unwrap().to_str().unwrap().to_string();
-                let entry = entry::Entry::new(filename, &blob.object_id);
+                let stat = workspace.stat_file(file);
+                let entry = entry::Entry::new(filename, &blob.object_id, stat);
                 entries.push(entry);
             }
             entries.sort_by_key(|e| e.filename.clone());

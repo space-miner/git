@@ -1,9 +1,11 @@
 use std::{
-    fs,
-    io::{self},
+    fs::{self, Metadata},
+    io,
     path::{Path, PathBuf},
     process,
 };
+
+use crate::entry;
 
 #[derive(Debug)]
 pub struct Workspace {
@@ -42,5 +44,16 @@ impl Workspace {
             }
         }
         Ok(v)
+    }
+
+    pub fn stat_file(&self, path: PathBuf) -> Metadata {
+        match fs::metadata(path) {
+            Ok(metadata) => {
+                metadata
+            },
+            Err(_) => {
+                panic!("Could not stat_file in workspace");
+            }
+        }
     }
 }
