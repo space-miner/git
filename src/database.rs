@@ -31,6 +31,9 @@ impl Database {
     pub fn write_object(&self, content_hash_hex: &str, content: &[u8]) -> io::Result<()> {
         let (dir, file) = utils::hash_to_path(content_hash_hex);
         let object_path = self.path_buf.join(dir);
+        if fs::metadata(object_path.join(file)).is_ok() {
+            return Ok(())
+        }
         let temp_file = NamedTempFile::new()?;
         let mut encoder = ZlibEncoder::new(Vec::new(), Compression::Fast);
         encoder.write_all(content).expect("Write error!");

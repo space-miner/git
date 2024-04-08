@@ -10,7 +10,6 @@ pub enum LockfileError {
     MissingParent,
     NoPermission,
     StaleLock,
-    UnknownError,
 }
 
 impl error::Error for LockfileError {}
@@ -81,8 +80,6 @@ impl LockFile {
 
     pub fn commit(&mut self) -> Result<(), LockfileError> {
         self.raise_on_stale_lock()?;
-        dbg!(&self.lock_path, &self.file_path);
-        dbg!(&self.lock_path, &self.file_path);
         let result = fs::rename(&self.lock_path, &self.file_path);
         match result {
             Ok(_) => {
