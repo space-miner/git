@@ -122,7 +122,7 @@ fn main() -> io::Result<()> {
             if parent.is_empty() {
                 is_root = String::from("(root-commit) ");
             }
-            println!("{}{}] {}", is_root, commit_hex_str, first_line);
+            println!("[{}{}] {}", is_root, commit_hex_str, first_line);
         }
         Command::Unknown => {
             eprintln!("Usage: {} <command> [<directory>]", args[0]);
