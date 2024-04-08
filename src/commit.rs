@@ -28,7 +28,7 @@ impl Object for Commit {
         let u8 = self.tree_object_id.as_bytes();
         let mut parent = String::from("");
         if !self.parent.is_empty() {
-            parent = format!("parent {}", self.parent.clone());
+            parent = format!("parent {}\n", self.parent.clone());
         }
         let content_str = format!(
             "tree {}\n{}author {}\ncommitter {}\n{}",
