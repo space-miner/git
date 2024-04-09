@@ -5,8 +5,6 @@ use std::{
     process,
 };
 
-use crate::entry;
-
 #[derive(Debug)]
 pub struct Workspace {
     ignore: [&'static str; 7],
@@ -34,8 +32,14 @@ impl Workspace {
                 for file in read_files {
                     let path = file?.path();
                     if self.ignore.into_iter().all(|x| !path.ends_with(x)) {
-                        v.push(path.clone());
-                    };
+                        if path.is_dir() {
+                            let dir = Self::new(path.clone());
+                            let mut files_from_dir = dir.list_files()?;
+                            v.append(&mut files_from_dir);
+                        } else if path.is_file() {
+                            v.push(path.clone());
+                        }
+                    }
                 }
             }
             Err(_) => {
@@ -48,9 +52,7 @@ impl Workspace {
 
     pub fn stat_file(&self, path: PathBuf) -> Metadata {
         match fs::metadata(path) {
-            Ok(metadata) => {
-                metadata
-            },
+            Ok(metadata) => metadata,
             Err(_) => {
                 panic!("Could not stat_file in workspace");
             }

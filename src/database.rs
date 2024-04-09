@@ -32,7 +32,7 @@ impl Database {
         let (dir, file) = utils::hash_to_path(content_hash_hex);
         let object_path = self.path_buf.join(dir);
         if fs::metadata(object_path.join(file)).is_ok() {
-            return Ok(())
+            return Ok(());
         }
         let temp_file = NamedTempFile::new()?;
         let mut encoder = ZlibEncoder::new(Vec::new(), Compression::Fast);

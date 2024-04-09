@@ -26,7 +26,9 @@ impl Object for Tree {
         for entry in &self.entries {
             content.push_str(&format!(
                 "{} {}\0{}",
-                entry.mode(), entry.filename, entry.object_id
+                entry.mode(),
+                entry.filename,
+                entry.object_id
             ))
         }
         // metadata + content

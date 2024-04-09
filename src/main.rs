@@ -65,6 +65,7 @@ fn main() -> io::Result<()> {
 
             // Read current workspace files into Entry vector (used to construct Tree).
             let files = workspace.list_files()?;
+            dbg!(&files);
             let mut entries = Vec::new();
             for file in files {
                 let data = workspace.read_data(&file)?;
@@ -112,7 +113,7 @@ fn main() -> io::Result<()> {
                 }
                 Err(err) => {
                     dbg!(&err);
-                    panic!("can't acquire lock");
+                    println!("can't acquire lock");
                     Err(err)
                 }
             };

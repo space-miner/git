@@ -5,8 +5,8 @@ use std::{
     path::PathBuf,
 };
 
-use std::time::Instant;
 use core::time::Duration;
+use std::time::Instant;
 
 #[derive(Debug)]
 pub enum LockfileError {
@@ -43,7 +43,6 @@ impl LockFile {
         match &self.lock {
             Some(_) => Ok(true),
             None => {
-                
                 match OpenOptions::new()
                     .read(true)
                     .write(true)

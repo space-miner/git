@@ -4,7 +4,7 @@ use std::{fs::Metadata, os::unix::fs::PermissionsExt};
 pub struct Entry {
     pub filename: String,
     pub object_id: String,
-    pub stat: Metadata
+    pub stat: Metadata,
 }
 
 impl Entry {
@@ -12,7 +12,7 @@ impl Entry {
         Entry {
             filename,
             object_id: object_id.to_string(),
-            stat
+            stat,
         }
     }
 
