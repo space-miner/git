@@ -5,6 +5,9 @@ use std::{
     path::PathBuf,
 };
 
+use std::time::Instant;
+use core::time::Duration;
+
 #[derive(Debug)]
 pub enum LockfileError {
     MissingParent,
@@ -40,6 +43,7 @@ impl LockFile {
         match &self.lock {
             Some(_) => Ok(true),
             None => {
+                
                 match OpenOptions::new()
                     .read(true)
                     .write(true)
@@ -48,6 +52,15 @@ impl LockFile {
                 {
                     Ok(lock) => {
                         self.lock = Some(lock);
+                        // let duration_seconds = 100;
+
+                        // let start_time = Instant::now();
+
+                        // loop {
+                        //     if start_time.elapsed() >= Duration::from_secs(duration_seconds) {
+                        //         break;
+                        //     }
+                        // }
                         Ok(true)
                     }
                     Err(ref err) if err.kind() == io::ErrorKind::AlreadyExists => Ok(false),

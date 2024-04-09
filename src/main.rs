@@ -112,6 +112,7 @@ fn main() -> io::Result<()> {
                 }
                 Err(err) => {
                     dbg!(&err);
+                    panic!("can't acquire lock");
                     Err(err)
                 }
             };
