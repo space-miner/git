@@ -1,3 +1,4 @@
 /target
 /mockgit
 .env
+.vscode

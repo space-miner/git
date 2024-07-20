@@ -18,5 +18,5 @@ name = "cat-file"
 path = "src/cat-file.rs"
 
 [[bin]]
-name = "shit"
+name = "jit"
 path = "src/main.rs"
