@@ -20,6 +20,15 @@ impl Tree {
 }
 
 impl Object for Tree {
+
+    /*
+        Tree format:
+        /* TODO: update comment */ 
+        -> update this <file mode> <file name>\0<object id>
+
+        Note that object id is the hash of the tree object, so
+        it is not displayable.
+     */
     fn to_string(&self) -> String {
         let kind = format!("{:?}", self.kind).to_lowercase();
         let mut content = String::new();

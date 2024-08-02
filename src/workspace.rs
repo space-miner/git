@@ -23,8 +23,8 @@ impl Workspace {
         fs::read_to_string(path)
     }
 
-    pub fn list_files(&self) -> io::Result<Vec<PathBuf>> {
-        let read_files_res = fs::read_dir(PathBuf::from(&self.path));
+    pub fn list_files(&self, cur_path: &PathBuf) -> io::Result<Vec<PathBuf>> {
+        let read_files_res = fs::read_dir(&cur_path);
         let mut v = Vec::new();
 
         match read_files_res {
@@ -33,11 +33,23 @@ impl Workspace {
                     let path = file?.path();
                     if self.ignore.into_iter().all(|x| !path.ends_with(x)) {
                         if path.is_dir() {
-                            let dir = Self::new(path.clone());
-                            let mut files_from_dir = dir.list_files()?;
+                            let mut files_from_dir = Self::list_files(&self, &path.clone())?;
                             v.append(&mut files_from_dir);
                         } else if path.is_file() {
-                            v.push(path.clone());
+                            // Strip root path.
+                            let absolute_path = path.as_path();
+                            let root_path = self.path.as_path();
+                            let relative_path = absolute_path.strip_prefix(root_path);
+                            // TODO: add custom error types and use the ? instead of pattern matching
+                            match relative_path {
+                                Ok(relative_path) => {
+                                    v.push(relative_path.to_path_buf());
+                                }
+                                Err(_) => {
+                                    eprintln!("Workspace::list_files error strippping relative path");
+                                    process::exit(1);
+                                }
+                            } 
                         }
                     }
                 }

@@ -59,12 +59,12 @@ fn main() -> io::Result<()> {
             let root_path = utils::get_root_path();
 
             // set up git data structures.
-            let workspace = workspace::Workspace::new(root_path);
+            let workspace = workspace::Workspace::new(root_path.clone());
             let database = database::Database::new(db_path);
             let refs = refs::Refs::new(git_path.clone());
 
             // Read current workspace files into Entry vector (used to construct Tree).
-            let files = workspace.list_files()?;
+            let files = workspace.list_files(&root_path.clone())?;
             dbg!(&files);
             let mut entries = Vec::new();
             for file in files {
