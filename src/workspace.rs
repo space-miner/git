@@ -20,6 +20,7 @@ impl Workspace {
     }
 
     pub fn read_data(&self, path: &Path) -> io::Result<String> {
+        dbg!(&path);
         fs::read_to_string(path)
     }
 
@@ -46,10 +47,12 @@ impl Workspace {
                                     v.push(relative_path.to_path_buf());
                                 }
                                 Err(_) => {
-                                    eprintln!("Workspace::list_files error strippping relative path");
+                                    eprintln!(
+                                        "Workspace::list_files error strippping relative path"
+                                    );
                                     process::exit(1);
                                 }
-                            } 
+                            }
                         }
                     }
                 }

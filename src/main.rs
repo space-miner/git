@@ -64,6 +64,7 @@ fn main() -> io::Result<()> {
             let refs = refs::Refs::new(git_path.clone());
 
             // Read current workspace files into Entry vector (used to construct Tree).
+
             let files = workspace.list_files(&root_path.clone())?;
             dbg!(&files);
             let mut entries = Vec::new();
@@ -71,16 +72,26 @@ fn main() -> io::Result<()> {
                 let data = workspace.read_data(&file)?;
                 let mut blob = blob::Blob::new(&data);
                 database.store(&mut blob)?;
-                let filename = file.file_name().unwrap().to_str().unwrap().to_string();
-                let stat = workspace.stat_file(file);
-                let entry = entry::Entry::new(filename, &blob.object_id, stat);
+                let filename = file
+                    .clone()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string();
+
+                let stat = workspace.stat_file(file.clone());
+                let entry = entry::Entry::new(filename, file, &blob.object_id, stat);
                 entries.push(entry);
             }
-            entries.sort_by_key(|e| e.filename.clone());
+            // TODO: can possibly delete moved to Tree::build
+            entries.sort_by_key(|e| e.path.clone().to_str().unwrap().to_string());
 
             // Create and store tree for commit.
-            let mut tree = tree::Tree::new(entries);
-            database.store(&mut tree).unwrap();
+            //let mut tree = tree::Tree::_new(entries.clone());
+            //database.store(&mut tree).unwrap();
+
+            let _ = tree::Tree::build(entries);
 
             // Get parent of current commit.
             let parent = refs.read_head().unwrap();
