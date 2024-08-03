@@ -5,9 +5,6 @@ use std::{
     path::PathBuf,
 };
 
-use core::time::Duration;
-use std::time::Instant;
-
 #[derive(Debug)]
 pub enum LockfileError {
     MissingParent,

@@ -118,9 +118,7 @@ fn main() -> io::Result<()> {
             let commit_hex_str = utils::u8_to_hex_str(commit.object_id.as_bytes().to_vec());
 
             let _ = match refs.update_head(commit_hex_str.clone()) {
-                Ok(_) => {
-                    Ok(())
-                }
+                Ok(_) => Ok(()),
                 Err(err) => {
                     dbg!(&err);
                     println!("can't acquire lock");

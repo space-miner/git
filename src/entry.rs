@@ -16,7 +16,7 @@ impl Entry {
     pub fn new(filename: String, path: PathBuf, object_id: &str, stat: Metadata) -> Self {
         Entry {
             filename,
-            path: path,
+            path,
             object_id: object_id.to_string(),
             stat,
         }

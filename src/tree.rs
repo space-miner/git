@@ -40,12 +40,12 @@ impl Tree {
     }
 
     pub fn store_tree(&mut self, db: &Database) {
-        for (_, entry_or_tree) in &mut self.entries {
+        for entry_or_tree in self.entries.values_mut() {
             if let EntryOrTree::Tree(subtree) = entry_or_tree {
-                subtree.store_tree(&db)
+                subtree.store_tree(db)
             }
         }
-        let _ = Database::store(&db, self);
+        let _ = Database::store(db, self);
     }
 
     pub fn add_entry(&mut self, parents: Vec<PathBuf>, entry: Entry) {
@@ -54,9 +54,9 @@ impl Tree {
             self.entries
                 .insert(entry.filename.clone(), EntryOrTree::Entry(entry));
         } else {
-            dbg!(&parents); 
+            dbg!(&parents);
             let path = &parents[0];
-            // foo/bar/world.txt   bar/world.txt   
+            // foo/bar/world.txt   bar/world.txt
 
             let first_component = path.components().next().unwrap();
             let mut basename = String::new();
@@ -74,7 +74,10 @@ impl Tree {
                 }
             }
 
-            let entry_or_tree = self.entries.entry(basename.clone()).or_insert(EntryOrTree::Tree(Tree::new()));
+            let entry_or_tree = self
+                .entries
+                .entry(basename.clone())
+                .or_insert(EntryOrTree::Tree(Tree::new()));
             self.entries_order.push(basename.clone());
             let parents = &parents[1..];
             dbg!(&parents);
@@ -88,7 +91,6 @@ impl Tree {
 }
 
 impl Object for Tree {
-
     fn to_string(&self) -> String {
         let kind = format!("{:?}", self.kind).to_lowercase();
         let mut content = String::new();

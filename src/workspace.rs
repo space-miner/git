@@ -25,7 +25,7 @@ impl Workspace {
     }
 
     pub fn list_files(&self, cur_path: &PathBuf) -> io::Result<Vec<PathBuf>> {
-        let read_files_res = fs::read_dir(&cur_path);
+        let read_files_res = fs::read_dir(cur_path);
         let mut v = Vec::new();
 
         match read_files_res {
@@ -34,7 +34,7 @@ impl Workspace {
                     let path = file?.path();
                     if self.ignore.into_iter().all(|x| !path.ends_with(x)) {
                         if path.is_dir() {
-                            let mut files_from_dir = Self::list_files(&self, &path.clone())?;
+                            let mut files_from_dir = Self::list_files(self, &path.clone())?;
                             v.append(&mut files_from_dir);
                         } else if path.is_file() {
                             // Strip root path.

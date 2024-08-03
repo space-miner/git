@@ -1,8 +1,8 @@
 use std::{
     error, fmt,
-    fs::{self, File},
+    fs::File,
     io::{self, Read},
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use crate::lockfile;
