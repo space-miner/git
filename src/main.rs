@@ -89,9 +89,9 @@ fn main() -> io::Result<()> {
 
             // Create and store tree for commit.
             //let mut tree = tree::Tree::_new(entries.clone());
-            //database.store(&mut tree).unwrap();
 
-            let _ = tree::Tree::build(entries);
+            let mut tree = tree::Tree::build(entries);
+            tree.store_tree(&database);
 
             // Get parent of current commit.
             let parent = refs.read_head().unwrap();
@@ -119,7 +119,6 @@ fn main() -> io::Result<()> {
 
             let _ = match refs.update_head(commit_hex_str.clone()) {
                 Ok(_) => {
-                    dbg!("no problem");
                     Ok(())
                 }
                 Err(err) => {
@@ -132,7 +131,6 @@ fn main() -> io::Result<()> {
             let first_line = commit.message.lines().next().unwrap();
 
             let mut is_root = String::from("");
-            dbg!(&parent);
             if parent.is_empty() {
                 is_root = String::from("(root-commit) ");
             }

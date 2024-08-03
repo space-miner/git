@@ -7,7 +7,7 @@ use crate::entry::Entry;
 use crate::traits::Object;
 
 #[derive(Debug)]
-enum EntryOrTree {
+pub enum EntryOrTree {
     Entry(Entry),
     Tree(Tree),
 }
@@ -30,8 +30,7 @@ impl Tree {
         }
     }
 
-    pub fn build(mut entries: Vec<Entry>) -> Self {
-        entries.sort_by_key(|e| e.filename.clone());
+    pub fn build(entries: Vec<Entry>) -> Self {
         let mut root = Self::new();
         for entry in entries {
             let ancestors = entry.ancestor_directories();
@@ -46,7 +45,7 @@ impl Tree {
                 subtree.store_tree(&db)
             }
         }
-        Database::store(&db, self);
+        let _ = Database::store(&db, self);
     }
 
     pub fn add_entry(&mut self, parents: Vec<PathBuf>, entry: Entry) {
@@ -55,34 +54,47 @@ impl Tree {
             self.entries
                 .insert(entry.filename.clone(), EntryOrTree::Entry(entry));
         } else {
-            if !self.entries.contains_key(&entry.filename) {
-                self.entries
-                    .insert(entry.filename.clone(), EntryOrTree::Tree(Tree::new()));
+            dbg!(&parents); 
+            let path = &parents[0];
+            // foo/bar/world.txt   bar/world.txt   
+
+            let first_component = path.components().next().unwrap();
+            let mut basename = String::new();
+            match first_component {
+                std::path::Component::RootDir => {
+                    eprintln!("The path starts with a root directory.");
+                    panic!();
+                }
+                std::path::Component::Normal(component) => {
+                    basename = String::from(component.to_str().unwrap());
+                }
+                _ => {
+                    println!("The first component is not a directory.");
+                    panic!();
+                }
             }
+
+            let entry_or_tree = self.entries.entry(basename.clone()).or_insert(EntryOrTree::Tree(Tree::new()));
+            self.entries_order.push(basename.clone());
             let parents = &parents[1..];
-            self.add_entry(parents.to_vec(), entry)
+            dbg!(&parents);
+            // TODO: this sucks what's the best way of not having to wrap unwrap this bogus layer
+            match entry_or_tree {
+                EntryOrTree::Tree(subtree) => subtree.add_entry(parents.to_vec(), entry),
+                _ => eprint!("not suppose to be here"),
+            }
         }
     }
-
-    // fn mode(&self) -> String {
-    //     return String::from("40000");
-    // }
 }
 
 impl Object for Tree {
-    /*
-       Tree format:
-       /* TODO: update comment */
-       -> update this <file mode> <file name>\0<object id>
 
-       Note that object id is the hash of the tree object, so
-       it is not displayable.
-    */
     fn to_string(&self) -> String {
         let kind = format!("{:?}", self.kind).to_lowercase();
         let mut content = String::new();
 
-        for (filename, entry_or_tree) in &self.entries {
+        for filename in &self.entries_order {
+            let entry_or_tree = self.entries.get(filename).unwrap();
             let (mode, object_id) = match entry_or_tree {
                 EntryOrTree::Entry(entry) => (entry.mode(), entry.object_id.clone()),
                 EntryOrTree::Tree(tree) => (String::from("40000"), tree.object_id.clone()),
@@ -90,7 +102,6 @@ impl Object for Tree {
 
             content.push_str(&format!("{} {}\0{}", mode, filename, object_id,))
         }
-        // metadata + content
         format!("{} {}\0{}", kind, content.bytes().len(), content)
     }
 
