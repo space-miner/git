@@ -58,7 +58,7 @@ impl Tree {
             let path = &parents[0];
             // foo/bar/world.txt   bar/world.txt
 
-            let first_component = path.components().next().unwrap();
+            let first_component = path.components().last().unwrap();
             let mut basename = String::new();
             match first_component {
                 std::path::Component::RootDir => {
@@ -73,14 +73,15 @@ impl Tree {
                     panic!();
                 }
             }
-
+            if !self.entries.contains_key(&basename) {
+                self.entries_order.push(basename.clone());
+            }
             let entry_or_tree = self
                 .entries
                 .entry(basename.clone())
                 .or_insert(EntryOrTree::Tree(Tree::new()));
-            self.entries_order.push(basename.clone());
             let parents = &parents[1..];
-            dbg!(&parents);
+            //dbg!(&parents);
             // TODO: this sucks what's the best way of not having to wrap unwrap this bogus layer
             match entry_or_tree {
                 EntryOrTree::Tree(subtree) => subtree.add_entry(parents.to_vec(), entry),
